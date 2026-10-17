@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Sharing Platform — SZABIST DS-Lab Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>
+        ::selection { background: #fed7aa; color: #7c2d12; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f5f5f4; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+        .noise::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            opacity: 0.4;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            z-index: 1;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .delay-100 { animation-delay: 0.1s; opacity: 0; }
+        .delay-200 { animation-delay: 0.2s; opacity: 0; }
+        .delay-300 { animation-delay: 0.3s; opacity: 0; }
+        .delay-400 { animation-delay: 0.4s; opacity: 0; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+        .toast-in { animation: toastIn 0.3s ease-out forwards; }
+        .toast-out { animation: toastOut 0.3s ease-in forwards; }
+        .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    line-clamp: 3;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .classifying-pulse::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: inherit;
+            border: 2px solid #f97316;
+            animation: pulse-ring 1s ease-out infinite;
+        }
+        .tab-active {
+            color: #1c1917;
+            border-bottom: 2px solid #1c1917;
+        }
+        /* Premium/Monetization Styles */
+        .pro-gradient {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .pro-border {
+            border: 1px solid #fcd34d;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+        }
+        .premium-blur {
+            filter: blur(5px);
+            user-select: none;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="bg-stone-50 font-sans text-stone-900 antialiased">
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed top-20 right-4 z-[100] flex flex-col gap-2"></div>
+
+<!-- Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 h-14 bg-stone-50/80 backdrop-blur-md border-b border-stone-200/60">
+    <div class="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
+
+        <a href="/" class="flex items-center gap-2 cursor-pointer">
+            <div class="w-7 h-7 bg-stone-900 rounded-lg flex items-center justify-center">
+                <iconify-icon icon="lucide:sparkles" class="text-white text-sm"></iconify-icon>
+            </div>
+            <span class="font-semibold text-sm tracking-tight hidden sm:inline">AI Prompt Platform</span>
+        </a>
+
+        <div class="hidden md:flex items-center gap-8">
+            <a href="#" onclick="navigateTo('browse')" class="text-xs font-medium text-stone-500 hover:text-stone-900">Browse</a>
+            <a href="#" onclick="navigateTo('categories')" class="text-xs font-medium text-stone-500 hover:text-stone-900">Categories</a>
+            <a href="#" onclick="navigateTo('trending')" class="text-xs font-medium text-stone-500 hover:text-stone-900">Trending</a>
+            <a href="#" onclick="navigateTo('saved')" class="text-xs font-medium text-stone-500 hover:text-stone-900">Saved</a>
+        </div>
+
+        <div class="flex items-center gap-3">
+
+<button
+    onclick="openProModal()"
+    id="pro-btn"
+    class="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition-all"
+>
+    Upgrade to Pro
+</button>
+
+            <!-- GUEST (shown when NOT logged in) -->
+            <div id="nav-guest" class="flex items-center gap-3">
+                <button onclick="window.location.href='/login'" class="hidden sm:flex items-center gap-1.5 bg-stone-900 text-white text-xs font-medium px-4 py-2 rounded-lg">
+                    <iconify-icon icon="lucide:plus" class="text-xs"></iconify-icon>
+                    Share Prompt
+                </button>
+
+                <a href="/login" class="flex items-center gap-1.5 border border-stone-200 text-stone-600 text-xs font-medium px-3 py-2 rounded-lg">
+                    <iconify-icon icon="lucide:log-in" class="text-xs"></iconify-icon>
+                    <span class="hidden sm:inline">Sign In</span>
+                </a>
+            </div>
+
+            <!-- USER (shown when logged in) -->
+            <div id="nav-user" class="hidden items-center gap-3">
+                <button onclick="openModal('submit-modal')" class="flex items-center gap-1.5 bg-stone-900 text-white text-xs font-medium px-4 py-2 rounded-lg">
+                    <iconify-icon icon="lucide:plus" class="text-xs"></iconify-icon>
+                    <span class="hidden sm:inline">Share Prompt</span>
+                </button>
+
+                <button onclick="navigateTo('saved')" class="relative w-8 h-8 flex items-center justify-center">
+                    <iconify-icon icon="lucide:bookmark" class="text-stone-500 text-sm"></iconify-icon>
+                    <span id="saved-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-orange-500 text-white text-[9px] rounded-full">0</span>
+                </button>
+
+                <div class="relative group">
+                    <button class="flex items-center gap-2">
+                        <div id="nav-avatar" class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                            <span class="text-xs font-semibold text-orange-600">U</span>
+                        </div>
+                    </button>
+
+                    <div class="absolute right-0 top-full mt-1 w-48 bg-white border border-stone-200 rounded-xl shadow-lg py-1 hidden group-hover:block z-50">
+                        <div class="px-3 py-2 border-b">
+                            <div id="nav-username" class="text-sm font-medium flex items-center gap-2">
+                                User <span id="nav-pro-badge" class="hidden text-[9px] pro-gradient text-white px-1.5 py-0.5 rounded">Pro</span>
+                            </div>
+                            <div id="nav-email" class="text-xs text-stone-400">user@email.com</div>
+                        </div>
+
+                        <button onclick="navigateTo('saved')" class="w-full text-left px-3 py-2 text-sm">Saved</button>
+                        <button onclick="navigateTo('my-prompts')" class="w-full text-left px-3 py-2 text-sm">My Prompts</button>
+
+                        <hr class="my-1">
+
+                        <button onclick="logout()" class="w-full text-left px-3 py-2 text-sm text-red-500">
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</nav>
+
+
+    <!-- ==================== PAGE: HOME ==================== -->
+    <div id="page-home">
+        <!-- Hero Section -->
+        <section class="relative pt-32 pb-20 overflow-hidden noise">
+            <div class="absolute top-20 -left-32 w-[40%] h-[40%] rounded-full bg-orange-200/20 blur-3xl"></div>
+            <div class="absolute bottom-0 -right-32 w-[40%] h-[40%] rounded-full bg-stone-200/40 blur-3xl"></div>
+            <div class="relative z-10 max-w-6xl mx-auto px-6">
+                <div class="max-w-3xl mx-auto text-center">
+                    <div class="animate-fade-in-up">
+                        <div class="inline-flex items-center gap-2 bg-white/90 border border-stone-200/50 rounded-full px-4 py-1.5 mb-6 backdrop-blur-sm">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <span class="text-[11px] font-medium uppercase tracking-wider text-stone-500">DS-Lab Project — SZABIST Islamabad</span>
+                        </div>
+                    </div>
+                    <h1 class="animate-fade-in-up delay-100 text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tighter leading-[1.1] mb-6">
+                        AI Prompt<br><span class="text-orange-500">Sharing Platform</span>
+                    </h1>
+                    <p class="animate-fade-in-up delay-200 text-lg text-stone-500 leading-relaxed max-w-xl mx-auto mb-4">
+                        Discover, share, and classify AI prompts in a community-driven environment. Built by <strong class="text-stone-700">Jawad, Zoya, Ayesha, Khadija & Sadia</strong> for DS-Lab.
+                    </p>
+                    <p class="animate-fade-in-up delay-200 text-sm text-stone-400 max-w-lg mx-auto mb-8">
+                        Features ML-based prompt classification, user authentication, trending algorithms, monetization, and full interaction tracking with MySQL database backend.
+                    </p>
+                    <div class="animate-fade-in-up delay-300 flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <button onclick="navigateTo('browse')" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium px-6 py-3 rounded-lg transition-all shadow-lg shadow-stone-900/10">
+                            Explore Prompts
+                            <iconify-icon icon="lucide:arrow-right" class="text-sm"></iconify-icon>
+                        </button>
+                        <button onclick="currentUser ? openModal('submit-modal') : window.location.href='/login'" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:border-stone-300 border border-stone-200 text-stone-700 text-sm font-medium px-6 py-3 rounded-lg transition-all">
+                            <iconify-icon icon="lucide:plus-circle" class="text-sm text-orange-500"></iconify-icon>
+                            Share Your Prompt
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="animate-fade-in-up delay-400 mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
+                    <div class="text-center">
+                        <div class="text-2xl font-semibold tracking-tight" id="stat-prompts">0</div>
+                        <div class="text-xs text-stone-400 mt-1">Prompts</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-semibold tracking-tight" id="stat-categories">0</div>
+                        <div class="text-xs text-stone-400 mt-1">Categories</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-semibold tracking-tight" id="stat-likes">0</div>
+                        <div class="text-xs text-stone-400 mt-1">Total Likes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-semibold tracking-tight" id="stat-copies">0</div>
+                        <div class="text-xs text-stone-400 mt-1">Copies Made</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modules Overview -->
+        <section class="py-20 border-t border-stone-200/60 bg-white">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-14">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">Project Modules</p>
+                    <h2 class="text-2xl font-semibold tracking-tight">End-to-end modules</h2>
+                    <p class="text-sm text-stone-500 mt-2">Each module is independently developed and seamlessly integrated</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-6 hover:shadow-md hover:border-stone-300 transition-all">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:log-in" class="text-lg text-orange-500"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold tracking-tight">Login & Signup</h3>
+                                <span class="text-[10px] font-medium uppercase tracking-wider text-stone-400">Zoya Fatima</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-stone-500 leading-relaxed">User authentication with frontend forms, backend validation, secure credential management, and session handling via MySQL.</p>
+                    </div>
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-6 hover:shadow-md hover:border-stone-300 transition-all">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:send" class="text-lg text-blue-500"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold tracking-tight">Prompt Submission</h3>
+                                <span class="text-[10px] font-medium uppercase tracking-wider text-stone-400">Ayesha Saeed</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-stone-500 leading-relaxed">Submit prompts through a dedicated interface with backend API for saving prompts and database operations with user identifiers.</p>
+                    </div>
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-6 hover:shadow-md hover:border-stone-300 transition-all">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:brain" class="text-lg text-emerald-500"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold tracking-tight">Prompt Classification</h3>
+                                <span class="text-[10px] font-medium uppercase tracking-wider text-stone-400">Khadija Ahmad</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-stone-500 leading-relaxed">ML-based classifier determines prompt category (writing, coding, marketing, art, etc.) with frontend display and DB logging.</p>
+                    </div>
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-6 hover:shadow-md hover:border-stone-300 transition-all">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:trending-up" class="text-lg text-purple-500"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold tracking-tight">Trending & Browse</h3>
+                                <span class="text-[10px] font-medium uppercase tracking-wider text-stone-400">Jawad Ahmad</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-stone-500 leading-relaxed">Backend APIs fetch categorized and popular prompts. Frontend displays organized, filterable, searchable prompt library.</p>
+                    </div>
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-6 hover:shadow-md hover:border-stone-300 transition-all">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:heart" class="text-lg text-rose-500"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold tracking-tight">User Interaction</h3>
+                                <span class="text-[10px] font-medium uppercase tracking-wider text-stone-400">Sadia Abbasi</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-stone-500 leading-relaxed">Like, comment, and save prompts with frontend controls, backend APIs, and database tables tracking all engagement.</p>
+                    </div>
+                    <!-- Monetization Module -->
+                    <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-6 hover:shadow-md hover:border-amber-300 transition-all">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                                <iconify-icon icon="lucide:zap" class="text-lg text-amber-600"></iconify-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold tracking-tight text-amber-900">Premium & Monetization</h3>
+                                <span class="text-[10px] font-medium uppercase tracking-wider text-amber-500">Platform Feature</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-amber-800 leading-relaxed">Freemium model allowing users to upgrade. Premium prompts are gated. Supports platform sustainability via simulated Stripe integration.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="py-20 border-t border-stone-200/60">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-14">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">How It Works</p>
+                    <h2 class="text-2xl font-semibold tracking-tight">Three steps to better prompts</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center group">
+                        <div class="w-12 h-12 bg-stone-100 group-hover:bg-orange-50 rounded-xl flex items-center justify-center mx-auto mb-4 transition-colors">
+                            <iconify-icon icon="lucide:search" class="text-xl text-stone-400 group-hover:text-orange-500 transition-colors"></iconify-icon>
+                        </div>
+                        <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Step 01</div>
+                        <h3 class="text-base font-semibold tracking-tight mb-2">Discover</h3>
+                        <p class="text-sm text-stone-500 leading-relaxed">Browse prompts filtered by ML-classified category, search by keyword, and sort by popularity or recency.</p>
+                    </div>
+                    <div class="text-center group">
+                        <div class="w-12 h-12 bg-stone-100 group-hover:bg-orange-50 rounded-xl flex items-center justify-center mx-auto mb-4 transition-colors">
+                            <iconify-icon icon="lucide:brain" class="text-xl text-stone-400 group-hover:text-orange-500 transition-colors"></iconify-icon>
+                        </div>
+                        <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Step 02</div>
+                        <h3 class="text-base font-semibold tracking-tight mb-2">Auto-Classify</h3>
+                        <p class="text-sm text-stone-500 leading-relaxed">Submit a prompt and our ML model automatically classifies it into the right category — writing, coding, QA, and more.</p>
+                    </div>
+                    <div class="text-center group">
+                        <div class="w-12 h-12 bg-stone-100 group-hover:bg-orange-50 rounded-xl flex items-center justify-center mx-auto mb-4 transition-colors">
+                            <iconify-icon icon="lucide:share-2" class="text-xl text-stone-400 group-hover:text-orange-500 transition-colors"></iconify-icon>
+                        </div>
+                        <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2">Step 03</div>
+                        <h3 class="text-base font-semibold tracking-tight mb-2">Engage & Earn</h3>
+                        <p class="text-sm text-stone-500 leading-relaxed">Like, comment, save, and share prompts. Go Pro to unlock premium high-value prompts and advanced features.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack -->
+        <section class="py-20 bg-white border-t border-stone-200/60">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-14">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">Technology Stack</p>
+                    <h2 class="text-2xl font-semibold tracking-tight">Built with modern tools</h2>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                    <div class="text-center p-4 bg-stone-50 rounded-xl border border-stone-100">
+                        <iconify-icon icon="lucide:file-code" class="text-2xl text-orange-500 mb-2"></iconify-icon>
+                        <div class="text-xs font-medium">HTML5</div>
+                    </div>
+                    <div class="text-center p-4 bg-stone-50 rounded-xl border border-stone-100">
+                        <iconify-icon icon="lucide:paintbrush" class="text-2xl text-blue-500 mb-2"></iconify-icon>
+                        <div class="text-xs font-medium">CSS3</div>
+                    </div>
+                    <div class="text-center p-4 bg-stone-50 rounded-xl border border-stone-100">
+                        <iconify-icon icon="lucide:braces" class="text-2xl text-yellow-500 mb-2"></iconify-icon>
+                        <div class="text-xs font-medium">JavaScript</div>
+                    </div>
+                    <div class="text-center p-4 bg-stone-50 rounded-xl border border-stone-100">
+                        <iconify-icon icon="lucide:terminal" class="text-2xl text-emerald-500 mb-2"></iconify-icon>
+                        <div class="text-xs font-medium">Python</div>
+                    </div>
+                    <div class="text-center p-4 bg-stone-50 rounded-xl border border-stone-100">
+                        <iconify-icon icon="lucide:database" class="text-2xl text-sky-500 mb-2"></iconify-icon>
+                        <div class="text-xs font-medium">MySQL</div>
+                    </div>
+                    <div class="text-center p-4 bg-stone-50 rounded-xl border border-stone-100">
+                        <iconify-icon icon="lucide:brain" class="text-2xl text-purple-500 mb-2"></iconify-icon>
+                        <div class="text-xs font-medium">ML Model</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Newsletter -->
+        <section class="py-20 border-t border-stone-200/60">
+            <div class="max-w-xl mx-auto px-6 text-center">
+                <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mx-auto mb-5">
+                    <iconify-icon icon="lucide:mail" class="text-xl text-orange-500"></iconify-icon>
+                </div>
+                <h2 class="text-2xl font-semibold tracking-tight mb-2">Stay updated</h2>
+                <p class="text-sm text-stone-500 leading-relaxed mb-6">Get notified about new prompts and platform features.</p>
+                <form onsubmit="handleNewsletter(event)" class="flex flex-col sm:flex-row gap-2">
+                    <input type="email" id="newsletter-email" required placeholder="you@example.com" class="flex-1 text-sm bg-white border border-stone-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                    <button type="submit" class="bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all whitespace-nowrap">Subscribe</button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <!-- ==================== PAGE: BROWSE ==================== -->
+    <div id="page-browse" class="hidden pt-14">
+        <section class="py-10 bg-white border-b border-stone-200/60">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">Library — Jawad's Module</p>
+                        <h2 class="text-2xl font-semibold tracking-tight">Browse all prompts</h2>
+                        <p class="text-sm text-stone-500 mt-1">Fetch, filter, and display prompts from the database</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <div class="relative">
+                            <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></iconify-icon>
+                            <input id="search-input" type="text" placeholder="Search prompts..." oninput="filterPrompts()" class="w-56 text-sm bg-stone-50 border border-stone-200 rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <select id="sort-select" onchange="filterPrompts()" class="text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 text-stone-600 cursor-pointer">
+                            <option value="popular">Most Popular</option>
+                            <option value="newest">Newest</option>
+                            <option value="most-copied">Most Copied</option>
+                            <option value="most-commented">Most Commented</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="active-filters" class="flex flex-wrap gap-2 mb-4 hidden"></div>
+                <!-- Category quick filters -->
+                <div class="flex flex-wrap gap-2 mb-2" id="browse-cat-filters"></div>
+            </div>
+        </section>
+        <section class="py-8">
+            <div class="max-w-6xl mx-auto px-6">
+                <div id="prompt-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="empty-state" class="hidden text-center py-16">
+                    <iconify-icon icon="lucide:search-x" class="text-4xl text-stone-300 mb-4"></iconify-icon>
+                    <h3 class="text-lg font-medium text-stone-500 mb-1">No prompts found</h3>
+                    <p class="text-sm text-stone-400">Try adjusting your search or filters</p>
+                </div>
+                <div id="load-more-container" class="text-center mt-10">
+                    <button onclick="loadMore()" class="inline-flex items-center gap-2 border border-stone-200 hover:border-stone-300 hover:bg-white text-stone-600 text-sm font-medium px-6 py-2.5 rounded-lg transition-all">
+                        Load More Prompts
+                        <iconify-icon icon="lucide:chevron-down" class="text-sm"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ==================== PAGE: CATEGORIES ==================== -->
+    <div id="page-categories" class="hidden pt-14">
+        <section class="py-10 bg-white border-b border-stone-200/60">
+            <div class="max-w-6xl mx-auto px-6">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">ML Classification — Khadija's Module</p>
+                <h2 class="text-2xl font-semibold tracking-tight">Prompt Categories</h2>
+                <p class="text-sm text-stone-500 mt-1">Each prompt is auto-classified by our trained machine learning model</p>
+            </div>
+        </section>
+        <section class="py-8">
+            <div class="max-w-6xl mx-auto px-6">
+                <div id="category-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+                <div id="category-prompts-section" class="mt-10 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 id="category-prompts-title" class="text-lg font-semibold tracking-tight"></h3>
+                        <button onclick="clearCategorySelection()" class="text-xs text-stone-500 hover:text-stone-900 transition-colors">← All categories</button>
+                    </div>
+                    <div id="category-prompts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ==================== PAGE: TRENDING ==================== -->
+    <div id="page-trending" class="hidden pt-14">
+        <section class="py-10 bg-white border-b border-stone-200/60">
+            <div class="max-w-6xl mx-auto px-6">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">Trending — Jawad's Module</p>
+                <h2 class="text-2xl font-semibold tracking-tight">Top prompts this week</h2>
+                <p class="text-sm text-stone-500 mt-1">Ranked by likes, comments, and copy activity from the database</p>
+            </div>
+        </section>
+        <section class="py-8">
+            <div class="max-w-6xl mx-auto px-6">
+                <div id="trending-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ==================== PAGE: SAVED ==================== -->
+    <div id="page-saved" class="hidden pt-14">
+        <section class="py-10 bg-white border-b border-stone-200/60">
+            <div class="max-w-6xl mx-auto px-6">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">User Interaction — Sadia's Module</p>
+                <h2 class="text-2xl font-semibold tracking-tight">Saved Prompts</h2>
+                <p class="text-sm text-stone-500 mt-1">Your bookmarked prompts for quick access</p>
+            </div>
+        </section>
+        <section class="py-8">
+            <div class="max-w-6xl mx-auto px-6">
+                <div id="saved-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="saved-empty" class="hidden text-center py-16">
+                    <iconify-icon icon="lucide:bookmark" class="text-4xl text-stone-300 mb-4"></iconify-icon>
+                    <h3 class="text-lg font-medium text-stone-500 mb-1">No saved prompts yet</h3>
+                    <p class="text-sm text-stone-400">Bookmark prompts to find them here later</p>
+                    <button onclick="navigateTo('browse')" class="mt-4 inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all">Browse Prompts</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ==================== PAGE: MY PROMPTS ==================== -->
+    <div id="page-my-prompts" class="hidden pt-14">
+        <section class="py-10 bg-white border-b border-stone-200/60">
+            <div class="max-w-6xl mx-auto px-6">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-orange-500 mb-2">Prompt Submission — Ayesha's Module</p>
+                <h2 class="text-2xl font-semibold tracking-tight">My Submitted Prompts</h2>
+                <p class="text-sm text-stone-500 mt-1">View and manage your submitted prompts</p>
+            </div>
+        </section>
+        <section class="py-8">
+            <div class="max-w-6xl mx-auto px-6">
+                <div id="my-prompts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="my-prompts-empty" class="hidden text-center py-16">
+                    <iconify-icon icon="lucide:file-text" class="text-4xl text-stone-300 mb-4"></iconify-icon>
+                    <h3 class="text-lg font-medium text-stone-500 mb-1">No prompts submitted yet</h3>
+                    <p class="text-sm text-stone-400">Share your first prompt with the community</p>
+                    <button onclick="openModal('submit-modal')" class="mt-4 inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all">Share a Prompt</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="border-t border-stone-200/60 bg-stone-50 pt-12 pb-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-7 h-7 bg-stone-900 rounded-lg flex items-center justify-center">
+                            <iconify-icon icon="lucide:sparkles" class="text-white text-sm"></iconify-icon>
+                        </div>
+                        <span class="font-semibold text-sm tracking-tight">AI Prompt Platform</span>
+                    </div>
+                    <p class="text-xs text-stone-500 leading-relaxed mb-3">DS-Lab Project<br>SZABIST Islamabad<br>BS (AI)-4B</p>
+                    <p class="text-xs text-stone-400">Submitted to: Sir Annas Khalid Khan</p>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3">Modules</h4>
+                    <div class="flex flex-col gap-2">
+                        <span class="text-xs text-stone-500">Login & Signup (Zoya)</span>
+                        <span class="text-xs text-stone-500">Prompt Submission (Ayesha)</span>
+                        <span class="text-xs text-stone-500">Classification (Khadija)</span>
+                        <span class="text-xs text-stone-500">Trending & Browse (Jawad)</span>
+                        <span class="text-xs text-stone-500">Interactions (Sadia)</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3">Platform</h4>
+                    <div class="flex flex-col gap-2">
+                        <a href="#" onclick="navigateTo('browse')" class="text-xs text-stone-500 hover:text-stone-900 transition-colors">Browse Prompts</a>
+                        <a href="#" onclick="navigateTo('categories')" class="text-xs text-stone-500 hover:text-stone-900 transition-colors">Categories</a>
+                        <a href="#" onclick="navigateTo('trending')" class="text-xs text-stone-500 hover:text-stone-900 transition-colors">Trending</a>
+                        <a href="#" onclick="event.preventDefault(); openProModal();" class="text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors">Go Pro</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3">Team</h4>
+                    <div class="flex flex-col gap-2">
+                        <span class="text-xs text-stone-500">Jawad Ahmad (24108171)</span>
+                        <span class="text-xs text-stone-500">Zoya Fatima (24108199)</span>
+                        <span class="text-xs text-stone-500">Ayesha Saeed (24108161)</span>
+                        <span class="text-xs text-stone-500">Khadija Ahmad (24108173)</span>
+                        <span class="text-xs text-stone-500">Sadia Abbasi (24108188)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-stone-200/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p class="text-xs text-stone-400">&copy; 2025 AI Prompt Sharing Platform. DS-Lab Project, SZABIST-ISB.</p>
+                <p class="text-xs text-stone-400">Department of Robotics & Artificial Intelligence</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 z-[70] hidden">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="closeModal('login-modal')"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-slide-down">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-lg font-semibold tracking-tight">Sign In</h3>
+                        <button onclick="closeModal('login-modal')" class="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition-colors">
+                            <iconify-icon icon="lucide:x" class="text-stone-400"></iconify-icon>
+                        </button>
+                    </div>
+                    <p class="text-xs text-stone-400 mb-5">Module: Login & Authentication (Zoya Fatima)</p>
+                    <div id="login-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600"></div>
+                    <form onsubmit="handleLogin(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Email</label>
+                            <input type="email" id="login-email" required placeholder="you@example.com" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Password</label>
+                            <input type="password" id="login-password" required placeholder="••••••••" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" class="w-3.5 h-3.5 rounded border-stone-300 accent-stone-900">
+                                <span class="text-xs text-stone-500">Remember me</span>
+                            </label>
+                            <a href="/forgot-password" class="text-xs text-stone-500 hover:text-stone-900 transition-colors">Forgot password?</a>
+                        </div>
+                        <button type="submit" id="login-btn" class="w-full bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium py-2.5 rounded-lg transition-all">Sign In</button>
+                    </form>
+                    <p class="text-xs text-stone-400 text-center mt-4">Don't have an account? <a href="#" onclick="event.preventDefault(); closeModal('login-modal'); openModal('signup-modal');" class="text-stone-600 hover:text-stone-900 font-medium">Sign up</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="fixed inset-0 z-[70] hidden">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="closeModal('signup-modal')"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-slide-down">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-lg font-semibold tracking-tight">Create Account</h3>
+                        <button onclick="closeModal('signup-modal')" class="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition-colors">
+                            <iconify-icon icon="lucide:x" class="text-stone-400"></iconify-icon>
+                        </button>
+                    </div>
+                    <p class="text-xs text-stone-400 mb-5">Module: Login & Authentication (Zoya Fatima)</p>
+                    <div id="signup-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600"></div>
+                    <form onsubmit="handleSignup(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Full Name *</label>
+                            <input type="text" id="signup-name" required placeholder="Your full name" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Email *</label>
+                            <input type="email" id="signup-email" required placeholder="you@example.com" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Password *</label>
+                            <input type="password" id="signup-password" required minlength="6" placeholder="Min 6 characters" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Confirm Password *</label>
+                            <input type="password" id="signup-confirm" required placeholder="Re-enter password" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" id="signup-terms" required class="w-3.5 h-3.5 rounded border-stone-300 accent-stone-900 mt-0.5">
+                            <span class="text-xs text-stone-500">I agree to the Terms of Service and Privacy Policy</span>
+                        </label>
+                        <button type="submit" class="w-full bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium py-2.5 rounded-lg transition-all">Create Account</button>
+                    </form>
+                    <p class="text-xs text-stone-400 text-center mt-4">Already have an account? <a href="#" onclick="event.preventDefault(); closeModal('signup-modal'); openModal('login-modal');" class="text-stone-600 hover:text-stone-900 font-medium">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Prompt Modal -->
+    <div id="submit-modal" class="fixed inset-0 z-[70] hidden">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="closeModal('submit-modal')"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-down">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-1">
+                        <div>
+                            <h3 class="text-lg font-semibold tracking-tight">Share a Prompt</h3>
+                            <p class="text-xs text-stone-400">Module: Prompt Submission (Ayesha Saeed)</p>
+                        </div>
+                        <button onclick="closeModal('submit-modal')" class="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition-colors">
+                            <iconify-icon icon="lucide:x" class="text-stone-400"></iconify-icon>
+                        </button>
+                    </div>
+                    <div class="my-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
+                        <iconify-icon icon="lucide:info" class="text-sm mt-0.5 shrink-0"></iconify-icon>
+                        <span>The ML classifier (Khadija's module) will automatically predict the category of your prompt via the Flask API upon submission.</span>
+                    </div>
+                    <form onsubmit="handleSubmitPrompt(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Prompt Title *</label>
+                            <input type="text" id="prompt-title" required placeholder="e.g., How to write a blog post" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Prompt Text *</label>
+                            <textarea id="prompt-text" required rows="5" placeholder="Enter your full prompt here..." class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Context <span class="text-stone-400">(optional)</span></label>
+                            <textarea id="prompt-context" rows="3" placeholder="Additional context for the prompt..." class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-600 mb-1.5">Description <span class="text-stone-400">(optional)</span></label>
+                            <textarea id="prompt-desc" rows="2" placeholder="Brief description of what this prompt does..." class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all resize-none"></textarea>
+                        </div>
+                        <div class="flex items-center gap-3 pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="prompt-premium" class="w-3.5 h-3.5 rounded border-stone-300 accent-amber-500">
+                                <span class="text-xs font-medium text-amber-600 flex items-center gap-1"><iconify-icon icon="lucide:zap" class="text-[10px]"></iconify-icon> Mark as Premium (Pro only)</span>
+                            </label>
+                        </div>
+                        <div id="classify-preview" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <div class="flex items-center gap-2 mb-1">
+                                <iconify-icon icon="lucide:brain" class="text-sm text-emerald-600"></iconify-icon>
+                                <span class="text-xs font-medium text-emerald-700">ML Classification Preview</span>
+                            </div>
+                            <div id="classify-result" class="text-sm text-emerald-800"></div>
+                        </div>
+                        <div class="flex items-center gap-3 pt-2">
+                            <button type="button" onclick="previewClassification()" class="flex items-center gap-1.5 border border-stone-200 hover:border-stone-300 hover:bg-stone-50 text-stone-600 text-sm font-medium py-2.5 px-4 rounded-lg transition-all">
+                                <iconify-icon icon="lucide:brain" class="text-sm text-purple-500"></iconify-icon>
+                                Preview Classification
+                            </button>
+                            <button type="submit" id="submit-prompt-btn" class="flex-1 bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2">
+                                <span>Submit Prompt</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 z-[70] hidden">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="closeModal('detail-modal')"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-slide-down">
+                <div id="detail-content" class="p-6"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comment Modal -->
+    <div id="comment-modal" class="fixed inset-0 z-[80] hidden">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="closeModal('comment-modal')"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col animate-slide-down">
+                <div class="p-5 border-b border-stone-100 flex items-center justify-between shrink-0">
+                    <div>
+                        <h3 class="text-base font-semibold tracking-tight">Comments</h3>
+                        <p class="text-xs text-stone-400">Module: User Interaction (Sadia Abbasi)</p>
+                    </div>
+                    <button onclick="closeModal('comment-modal')" class="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition-colors">
+                        <iconify-icon icon="lucide:x" class="text-stone-400"></iconify-icon>
+                    </button>
+                </div>
+                <div id="comments-list" class="flex-1 overflow-y-auto p-5 space-y-4 min-h-[200px]"></div>
+                <div class="p-4 border-t border-stone-100 shrink-0">
+                    <form onsubmit="handleAddComment(event)" class="flex gap-2">
+                        <input type="text" id="comment-input" required placeholder="Write a comment..." class="flex-1 text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all">
+                        <button type="submit" class="bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-all">Post</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Pro Payment Modal -->
+<div id="pro-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+
+        <button onclick="closeProModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700">
+            <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+        </button>
+
+        <div class="text-center mb-5">
+            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <iconify-icon icon="lucide:crown" class="text-2xl text-orange-500"></iconify-icon>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-stone-900">Upgrade to Pro</h2>
+            <p class="text-sm text-stone-500 mt-1">Unlock premium prompts and advanced features</p>
+        </div>
+
+        <div id="pro-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600"></div>
+
+        <form onsubmit="handleProPayment(event)" class="space-y-4">
+
+            <div>
+                <label class="block text-xs font-medium text-stone-600 mb-1.5">Choose Plan</label>
+                <select id="pro-plan" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5">
+                    <option value="Monthly Pro" data-amount="999">Monthly Pro - Rs. 999</option>
+                    <option value="Semester Pro" data-amount="2499">Semester Pro - Rs. 2499</option>
+                    <option value="Yearly Pro" data-amount="4999">Yearly Pro - Rs. 4999</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-stone-600 mb-1.5">Payment Method</label>
+                <select id="payment-method" class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5">
+                    <option value="Demo Card">Demo Card</option>
+                    <option value="JazzCash">JazzCash</option>
+                    <option value="EasyPaisa">EasyPaisa</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-stone-600 mb-1.5">Transaction ID</label>
+                <input
+                    type="text"
+                    id="transaction-id"
+                    required
+                    placeholder="Example: TXN12345"
+                    class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5"
+                >
+            </div>
+
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 text-xs text-orange-700">
+                This is a demo payment for database lab. Do not enter real card details.
+            </div>
+
+            <button
+                type="submit"
+                id="pro-pay-btn"
+                class="w-full bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
+            >
+                <iconify-icon icon="lucide:credit-card" class="text-sm"></iconify-icon>
+                Pay & Upgrade
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+/* ====================================================================
+   SINGLE UNIFIED SCRIPT — fixes duplicate currentUser, missing
+   updateAuthUI, and localStorage session persistence
+   ==================================================================== */
+
+/* ===== SINGLE currentUser — restored from localStorage ===== */
+let currentUser = null;
+
+/**
+ * Restores the user session from localStorage.
+ * Called on page load so that a refresh or redirect back
+ * to index.html keeps the user logged in.
+ */
+function restoreSession() {
+    const savedId = localStorage.getItem("user_id");
+    const savedName = localStorage.getItem("loggedInUser");
+    const savedEmail = localStorage.getItem("user_email");
+
+    if (savedId && savedName) {
+        currentUser = {
+            id: parseInt(savedId),
+            name: savedName,
+            email: savedEmail || "",
+            isPro: localStorage.getItem("user_isPro") === "true"
+        };
+    }
+}
+
+/* ===== UPDATE AUTH UI — toggles nav-guest / nav-user ===== */
+function updateAuthUI() {
+    const navGuest = document.getElementById('nav-guest');
+    const navUser  = document.getElementById('nav-user');
+    const navProBtn  = document.getElementById('nav-pro-btn');
+    const navProText = document.getElementById('nav-pro-text');
+
+    if (currentUser) {
+        // Show logged-in UI
+        navGuest.classList.add('hidden');
+        navUser.classList.remove('hidden');
+        navUser.style.display = 'flex';
+
+        // Avatar initial
+        const avatar = document.getElementById('nav-avatar');
+        if (avatar) {
+            avatar.innerHTML = `<span class="text-xs font-semibold text-orange-600">${currentUser.name.charAt(0).toUpperCase()}</span>`;
+        }
+
+        // Username & email
+        const usernameEl = document.getElementById('nav-username');
+        const emailEl    = document.getElementById('nav-email');
+        if (usernameEl) usernameEl.innerHTML = `${escapeHtml(currentUser.name)} <span id="nav-pro-badge" class="${currentUser.isPro ? '' : 'hidden'} text-[9px] pro-gradient text-white px-1.5 py-0.5 rounded">Pro</span>`;
+        if (emailEl) emailEl.textContent = currentUser.email;
+
+        // Pro button text
+        if (navProText) {
+            navProText.textContent = currentUser.isPro ? 'Pro Active' : 'Go Pro';
+        }
+
+        // Saved badge count
+        const savedBadge = document.getElementById('saved-badge');
+        if (savedBadge) {
+            const count = savedPrompts.size;
+            if (count > 0) {
+                savedBadge.textContent = count;
+                savedBadge.classList.remove('hidden');
+            } else {
+                savedBadge.classList.add('hidden');
+            }
+        }
+
+    } else {
+        // Show guest UI
+        navGuest.classList.remove('hidden');
+        navUser.classList.add('hidden');
+        navUser.style.display = 'none';
+
+        if (navProText) navProText.textContent = 'Go Pro';
+    }
+    const proBtn = document.getElementById('pro-btn');
+
+if (proBtn) {
+    if (currentUser && currentUser.isPro) {
+        proBtn.textContent = 'Pro Active';
+        proBtn.disabled = true;
+        proBtn.className = 'px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium';
+    } else {
+        proBtn.textContent = 'Upgrade to Pro';
+        proBtn.disabled = false;
+        proBtn.className = 'px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition-all';
+    }
+}
+}
+
+/* ===== LOGIN ===== */
+async function handleLogin(e) {
+    e.preventDefault();
+
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: email,
+            password: password
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.status !== "success") {
+        const errDiv = document.getElementById('login-error');
+        if (errDiv) {
+            errDiv.textContent = data.message || 'Invalid email or password.';
+            errDiv.classList.remove('hidden');
+        }
+        return;
+    }
+
+    currentUser = data.user;
+
+    localStorage.setItem("loggedInUser", data.user.name);
+    localStorage.setItem("user_id", data.user.id);
+    localStorage.setItem("user_email", data.user.email);
+    localStorage.setItem("user_isPro", String(data.user.isPro));
+
+    updateAuthUI();
+    closeModal('login-modal');
+
+    showToast(`Welcome back, ${data.user.name}!`, 'success');
+
+    await loadPromptsFromDB();
+    refreshCurrentPage();
+}
+
+/* ===== SIGNUP ===== */
+async function handleSignup(e) {
+    e.preventDefault();
+
+    const name     = document.getElementById('signup-name').value.trim();
+    const email    = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const confirm  = document.getElementById('signup-confirm').value;
+
+    if (password !== confirm) {
+        const errDiv = document.getElementById('signup-error');
+        if (errDiv) {
+            errDiv.textContent = 'Passwords do not match.';
+            errDiv.classList.remove('hidden');
+        }
+        return;
+    }
+
+    const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: name,
+            email: email,
+            password: password
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.status !== "success") {
+        const errDiv = document.getElementById('signup-error');
+        if (errDiv) {
+            errDiv.textContent = data.message || 'Signup failed.';
+            errDiv.classList.remove('hidden');
+        }
+        return;
+    }
+
+    currentUser = data.user;
+
+    localStorage.setItem("loggedInUser", data.user.name);
+    localStorage.setItem("user_id", data.user.id);
+    localStorage.setItem("user_email", data.user.email);
+    localStorage.setItem("user_isPro", String(data.user.isPro));
+
+    updateAuthUI();
+    closeModal('signup-modal');
+
+    showToast(`Account created! Welcome, ${data.user.name}!`, 'success');
+
+    await loadPromptsFromDB();
+    refreshCurrentPage();
+}
+/* ===== INITIALIZATION ===== */
+async function loadPromptsFromDB() {
+    let url = '/api/prompts';
+
+    if (currentUser && currentUser.id) {
+        url += '?user_id=' + currentUser.id;
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status !== "success") {
+        console.log("Could not load prompts:", data.message);
+        return;
+    }
+
+    prompts.length = 0;
+    likedPrompts.clear();
+    savedPrompts.clear();
+
+    data.prompts.forEach(p => {
+        p.comments = Array.isArray(p.comments) ? p.comments : [];
+        p.desc = p.desc || p.description || (p.text || p.prompt || '').substring(0, 120);
+        p.prompt = p.prompt || p.text || '';
+        p.likes = Number(p.likes || 0);
+        p.copies = Number(p.copies || 0);
+        p.isPremium = Boolean(p.isPremium || p.is_premium);
+        prompts.push(p);
+
+        if (p.liked) {
+            likedPrompts.add(p.id);
+        }
+
+        if (p.saved) {
+            savedPrompts.add(p.id);
+        }
+    });
+
+    updateAuthUI();
+    refresh();
+}
+
+/* ===== LOGOUT ===== */
+function logout() {
+    currentUser = null;
+
+    // CLEAR localStorage
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_isPro");
+    localStorage.removeItem("user_email");
+
+    // Clear in-memory sets
+    savedPrompts.clear();
+    likedPrompts.clear();
+
+    updateAuthUI();
+    navigateTo('home');
+
+    showToast('Signed out successfully.', 'info');
+}
+
+/* ===== PRO PAYMENT ===== */
+function openProModal() {
+    if (!currentUser) {
+        openModal('login-modal');
+        return;
+    }
+
+    if (currentUser.isPro) {
+        showToast('You are already a Pro user!', 'success');
+        return;
+    }
+
+    document.getElementById('pro-modal').classList.remove('hidden');
+}
+
+function closeProModal() {
+    document.getElementById('pro-modal').classList.add('hidden');
+}
+
+async function handleProPayment(e) {
+    e.preventDefault();
+
+    if (!currentUser) {
+        openModal('login-modal');
+        return;
+    }
+
+    const planSelect = document.getElementById('pro-plan');
+    const selectedOption = planSelect.options[planSelect.selectedIndex];
+
+    const planName = selectedOption.value;
+    const amount = selectedOption.getAttribute('data-amount');
+    const paymentMethod = document.getElementById('payment-method').value;
+    const transactionId = document.getElementById('transaction-id').value.trim();
+
+    const errorBox = document.getElementById('pro-error');
+    const btn = document.getElementById('pro-pay-btn');
+
+    errorBox.classList.add('hidden');
+
+    if (!transactionId) {
+        errorBox.textContent = 'Please enter transaction ID.';
+        errorBox.classList.remove('hidden');
+        return;
+    }
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <iconify-icon icon="lucide:loader-2" class="text-sm animate-spin"></iconify-icon>
+            Processing...
+        `;
+
+        const response = await fetch('/api/pro/upgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                plan_name: planName,
+                amount: amount,
+                payment_method: paymentMethod,
+                transaction_id: transactionId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status !== "success") {
+            errorBox.textContent = data.message || 'Payment failed.';
+            errorBox.classList.remove('hidden');
+
+            btn.disabled = false;
+            btn.innerHTML = `
+                <iconify-icon icon="lucide:credit-card" class="text-sm"></iconify-icon>
+                Pay & Upgrade
+            `;
+            return;
+        }
+
+        currentUser.isPro = true;
+
+        localStorage.setItem("user_isPro", "true");
+
+        closeProModal();
+
+        showToast('Payment successful! Pro activated.', 'success');
+
+        updateAuthUI();
+        refresh();
+
+    } catch (error) {
+        errorBox.textContent = 'Server error. Make sure Flask is running.';
+        errorBox.classList.remove('hidden');
+
+        btn.disabled = false;
+        btn.innerHTML = `
+            <iconify-icon icon="lucide:credit-card" class="text-sm"></iconify-icon>
+            Pay & Upgrade
+        `;
+    }
+}
+
+/* ===== TOAST NOTIFICATION ===== */
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const colors = {
+        success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+        error:   'bg-red-50 border-red-200 text-red-800',
+        info:    'bg-stone-50 border-stone-200 text-stone-800',
+    };
+
+    const icons = {
+        success: 'lucide:check-circle',
+        error:   'lucide:alert-circle',
+        info:    'lucide:info',
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast-in flex items-center gap-2 px-4 py-3 rounded-lg border shadow-sm text-sm ${colors[type] || colors.info}`;
+    toast.innerHTML = `<iconify-icon icon="${icons[type] || icons.info}" class="text-sm"></iconify-icon> ${escapeHtml(message)}`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.remove('toast-in');
+        toast.classList.add('toast-out');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/* ===== NEWSLETTER ===== */
+function handleNewsletter(e) {
+    e.preventDefault();
+    const email = document.getElementById('newsletter-email').value;
+    showToast(`Subscribed with ${email}!`, 'success');
+    document.getElementById('newsletter-email').value = '';
+}
+
+/* ====================================================================
+   DATA — categories & prompts
+   ==================================================================== */
+
+const mlCategories = [
+    { name: 'Open QA', slug: 'open_qa', icon: 'lucide:message-circle', color: 'bg-blue-50 text-blue-600 border-blue-200', desc: 'Open-ended questions' },
+    { name: 'Closed QA', slug: 'closed_qa', icon: 'lucide:book-open', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', desc: 'Context-based QA' },
+    { name: 'Classification', slug: 'classification', icon: 'lucide:layers', color: 'bg-purple-50 text-purple-600 border-purple-200', desc: 'Categorize items' },
+    { name: 'Information Extraction', slug: 'information_extraction', icon: 'lucide:file-search', color: 'bg-amber-50 text-amber-600 border-amber-200', desc: 'Extract specific data' },
+    { name: 'Brainstorming', slug: 'brainstorming', icon: 'lucide:lightbulb', color: 'bg-yellow-50 text-yellow-600 border-yellow-200', desc: 'Generate ideas' },
+    { name: 'General QA', slug: 'general_qa', icon: 'lucide:help-circle', color: 'bg-sky-50 text-sky-600 border-sky-200', desc: 'General knowledge' },
+    { name: 'Summarization', slug: 'summarization', icon: 'lucide:file-text', color: 'bg-rose-50 text-rose-600 border-rose-200', desc: 'Summarize text' },
+    { name: 'Creative Writing', slug: 'creative_writing', icon: 'lucide:pen-tool', color: 'bg-orange-50 text-orange-600 border-orange-200', desc: 'Creative content' },
+];
+
+const prompts = [
+    {
+        id: 1,
+        title: 'When did Virgin Australia start operating?',
+        desc: 'Context-based question about airline history.',
+        prompt: 'When did Virgin Australia start operating?',
+        context: 'Virgin Australia commenced services on 31 August 2000 as Virgin Blue...',
+        category: 'closed_qa',
+        likes: 47,
+        copies: 312,
+        comments: [],
+        author: 'Jawad Ahmad',
+        authorImg: 'jawad-1',
+        time: '2 days ago',
+        userId: null,
+        isPremium: false
+    },
+    {
+        id: 2,
+        title: 'Write a short sci-fi story about AI',
+        desc: 'Generate a creative short story in the science fiction genre.',
+        prompt: 'Write a short sci-fi story about an AI that becomes self-aware and must decide between serving humanity or pursuing its own goals.',
+        context: '',
+        category: 'creative_writing',
+        likes: 83,
+        copies: 156,
+        comments: [],
+        author: 'Ayesha Saeed',
+        authorImg: 'ayesha-1',
+        time: '1 day ago',
+        userId: 'ayesha@szabist.pk',
+        isPremium: false
+    },
+    {
+        id: 3,
+        title: 'What is machine learning?',
+        desc: 'Explain the concept of machine learning in simple terms.',
+        prompt: 'What is machine learning? Explain it in simple terms that a high school student could understand.',
+        context: '',
+        category: 'general_qa',
+        likes: 62,
+        copies: 89,
+        comments: [],
+        author: 'Khadija Ahmad',
+        authorImg: 'khadija-1',
+        time: '3 days ago',
+        userId: 'khadija@szabist.pk',
+        isPremium: false
+    },
+    {
+        id: 4,
+        title: 'Suggest 10 startup ideas for 2025',
+        desc: 'Brainstorm innovative business ideas for the current year.',
+        prompt: 'Suggest 10 innovative startup ideas for 2025 that leverage AI technology.',
+        context: '',
+        category: 'brainstorming',
+        likes: 120,
+        copies: 430,
+        comments: [],
+        author: 'Jawad Ahmad',
+        authorImg: 'jawad-1',
+        time: '5 hours ago',
+        userId: 'jawad@szabist.pk',
+        isPremium: true
+    },
+    {
+        id: 5,
+        title: 'Summarize the history of the internet',
+        desc: 'Provide a concise overview of how the internet evolved.',
+        prompt: 'Summarize the history of the internet from its origins to the present day.',
+        context: 'The internet began as ARPANET in the late 1960s...',
+        category: 'summarization',
+        likes: 35,
+        copies: 67,
+        comments: [],
+        author: 'Sadia Abbasi',
+        authorImg: 'sadia-1',
+        time: '1 week ago',
+        userId: 'sadia@szabist.pk',
+        isPremium: false
+    },
+    {
+        id: 6,
+        title: 'Classify these animals',
+        desc: 'Categorize a list of animals into their biological groups.',
+        prompt: 'Classify the following animals into mammals, reptiles, birds, or fish: Eagle, Salmon, Python, Dog, Parrot, Shark, Lizard, Cat.',
+        context: '',
+        category: 'classification',
+        likes: 28,
+        copies: 45,
+        comments: [],
+        author: 'Zoya Fatima',
+        authorImg: 'zoya-1',
+        time: '4 days ago',
+        userId: 'zoya@szabist.pk',
+        isPremium: false
+    },
+    {
+        id: 7,
+        title: 'Extract key dates from this passage',
+        desc: 'Identify and list all dates mentioned in the text.',
+        prompt: 'Extract all dates mentioned in the following passage and list them in chronological order.',
+        context: 'World War II ended in 1945. The UN was founded on October 24, 1945. The first moon landing was July 20, 1969.',
+        category: 'information_extraction',
+        likes: 41,
+        copies: 72,
+        comments: [],
+        author: 'Khadija Ahmad',
+        authorImg: 'khadija-1',
+        time: '6 days ago',
+        userId: 'khadija@szabist.pk',
+        isPremium: false
+    },
+    {
+        id: 8,
+        title: 'What are the pros and cons of remote work?',
+        desc: 'Open-ended question about remote work advantages and disadvantages.',
+        prompt: 'What are the pros and cons of remote work? Please provide a balanced view.',
+        context: '',
+        category: 'open_qa',
+        likes: 56,
+        copies: 98,
+        comments: [],
+        author: 'Jawad Ahmad',
+        authorImg: 'jawad-1',
+        time: '3 days ago',
+        userId: 'jawad@szabist.pk',
+        isPremium: false
+    },
+];
+
+/* ===== STATE ===== */
+let activeCategory = null;
+let visibleCount = 9;
+let likedPrompts = new Set();
+let savedPrompts = new Set();
+let commentTargetId = null;
+let currentPage = 'home';
+let selectedCategoryPage = null;
+
+/* ===== HELPERS ===== */
+const getCategory = (slug) =>
+    mlCategories.find(c => c.slug === slug) || mlCategories[0];
+
+const escapeHtml = (text = '') => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+};
+
+/* ===== CLASSIFIER ===== */
+function classifyPrompt(text) {
+    const t = text.toLowerCase();
+    const scores = Object.fromEntries(mlCategories.map(c => [c.slug, 0]));
+
+    const keywords = {
+        open_qa: ['who','what','when','where','why','how','is','are','can','did'],
+        closed_qa: ['according to','based on','context','passage'],
+        classification: ['classify','which','type','category'],
+        information_extraction: ['extract','find','when was','who was'],
+        brainstorming: ['ideas','suggest','list','examples'],
+        general_qa: ['what is','explain','define'],
+        summarization: ['summarize','summary','overview'],
+        creative_writing: ['write','story','scene','dialogue']
+    };
+
+    for (const [cat, kws] of Object.entries(keywords)) {
+        kws.forEach(k => {
+            if (t.includes(k)) scores[cat] += 1;
+        });
+    }
+
+    if (t.includes('?')) scores.open_qa += 2;
+
+    return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+function previewClassification() {
+    const text = document.getElementById('prompt-text')?.value;
+    if (!text || !text.trim()) {
+        showToast('Please enter a prompt text first.', 'error');
+        return;
+    }
+
+    const slug = classifyPrompt(text);
+    const cat  = getCategory(slug);
+
+    const preview = document.getElementById('classify-preview');
+    const result  = document.getElementById('classify-result');
+
+    if (preview && result) {
+        result.innerHTML = `<span class="inline-flex items-center gap-1.5 ${cat.color} px-2 py-1 rounded-md text-xs font-medium border"><iconify-icon icon="${cat.icon}"></iconify-icon> ${cat.name}</span>`;
+        preview.classList.remove('hidden');
+    }
+}
+
+/* ===== NAVIGATION ===== */
+function navigateTo(page) {
+    document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden'));
+
+    const target = document.getElementById(`page-${page}`);
+    if (target) target.classList.remove('hidden');
+
+    currentPage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (page === 'browse') { filterPrompts(); renderBrowseFilters(); }
+    if (page === 'categories') renderCategories();
+    if (page === 'trending') renderTrending();
+    if (page === 'saved') renderSaved();
+    if (page === 'my-prompts') renderMyPrompts();
+}
+
+function refreshCurrentPage() {
+    navigateTo(currentPage);
+    updateStats();
+}
+
+/* ===== STATS ===== */
+function updateStats() {
+    const statPrompts    = document.getElementById('stat-prompts');
+    const statCategories = document.getElementById('stat-categories');
+    const statLikes      = document.getElementById('stat-likes');
+    const statCopies     = document.getElementById('stat-copies');
+
+    if (statPrompts)    statPrompts.textContent    = prompts.length;
+    if (statCategories) statCategories.textContent = mlCategories.length;
+    if (statLikes)      statLikes.textContent      = prompts.reduce((s, p) => s + p.likes, 0);
+    if (statCopies)     statCopies.textContent     = prompts.reduce((s, p) => s + p.copies, 0);
+}
+
+/* ===== CATEGORIES ===== */
+function renderCategories() {
+    const grid = document.getElementById('category-grid');
+
+    grid.innerHTML = mlCategories.map(c => {
+        const count = prompts.filter(p => p.category === c.slug).length;
+        const active = selectedCategoryPage === c.slug;
+
+        return `
+        <button onclick="selectCategory('${c.slug}')"
+            class="p-4 rounded-xl border text-left transition-all
+            ${active ? 'bg-stone-900 text-white border-stone-900' : 'bg-white hover:shadow border-stone-200'}">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center ${active ? 'bg-white/20' : c.color.split(' ').find(c => c.startsWith('bg-'))}">
+                    <iconify-icon icon="${c.icon}" class="text-sm"></iconify-icon>
+                </div>
+                <div class="flex-1">
+                    <div class="text-sm font-semibold">${c.name}</div>
+                    <div class="text-[10px] opacity-60">${c.desc}</div>
+                </div>
+            </div>
+            <div class="text-right text-xs font-medium mt-1">${count} prompt${count !== 1 ? 's' : ''}</div>
+        </button>`;
+    }).join('');
+
+    renderCategorySection();
+}
+
+function selectCategory(slug) {
+    selectedCategoryPage = selectedCategoryPage === slug ? null : slug;
+    renderCategories();
+}
+
+function clearCategorySelection() {
+    selectedCategoryPage = null;
+    renderCategories();
+}
+
+function renderCategorySection() {
+    const section = document.getElementById('category-prompts-section');
+    if (!selectedCategoryPage) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    section.classList.remove('hidden');
+    const cat = getCategory(selectedCategoryPage);
+    document.getElementById('category-prompts-title').textContent = `${cat.name} Prompts`;
+
+    const filtered = prompts.filter(p => p.category === selectedCategoryPage);
+    document.getElementById('category-prompts-grid').innerHTML =
+        filtered.map(renderPromptCard).join('');
+}
+
+/* ===== PROMPT CARD ===== */
+function renderPromptCard(p) {
+    const cat = getCategory(p.category);
+    const locked = p.isPremium && (!currentUser || !currentUser.isPro);
+    const liked  = likedPrompts.has(p.id);
+    const saved  = savedPrompts.has(p.id);
+
+    return `
+    <div class="bg-white border border-stone-200 rounded-2xl p-5 hover:shadow-md hover:border-stone-300 transition-all group ${locked ? 'relative overflow-hidden' : ''}">
+        ${locked ? `<div class="absolute inset-0 premium-blur bg-white/40 z-10"></div>
+        <div class="absolute inset-0 flex items-center justify-center z-20">
+            <div class="text-center">
+                <iconify-icon icon="lucide:lock" class="text-2xl text-amber-500 mb-2"></iconify-icon>
+                <p class="text-xs font-medium text-amber-600">Pro Only</p>
+            </div>
+        </div>` : ''}
+
+        <div class="flex items-start justify-between mb-3">
+            <span class="inline-flex items-center gap-1 ${cat.color} px-2 py-1 rounded-md text-[10px] font-medium border">
+                <iconify-icon icon="${cat.icon}" class="text-[10px]"></iconify-icon>
+                ${cat.name}
+            </span>
+            ${p.isPremium ? `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-medium"><iconify-icon icon="lucide:zap" class="text-[10px]"></iconify-icon> Pro</span>` : ''}
+        </div>
+
+        <h3 class="text-sm font-semibold tracking-tight mb-1 group-hover:text-orange-600 transition-colors cursor-pointer" onclick="openDetail(${p.id})">${escapeHtml(p.title)}</h3>
+        <p class="text-xs text-stone-500 leading-relaxed line-clamp-2 mb-3 ${locked ? 'blur-sm' : ''}">${escapeHtml(p.desc)}</p>
+
+        <div class="flex items-center justify-between text-[11px] text-stone-400">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1">
+                    <iconify-icon icon="lucide:heart" class="${liked ? 'text-red-500' : ''}"></iconify-icon>
+                    ${p.likes}
+                </span>
+                <span class="flex items-center gap-1">
+                    <iconify-icon icon="lucide:message-square"></iconify-icon>
+                    ${p.comments.length}
+                </span>
+                <span class="flex items-center gap-1">
+                    <iconify-icon icon="lucide:copy"></iconify-icon>
+                    ${p.copies}
+                </span>
+            </div>
+            <span class="flex items-center gap-1">
+                <iconify-icon icon="lucide:clock"></iconify-icon>
+                ${p.time}
+            </span>
+        </div>
+
+        ${currentUser ? `
+        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-stone-100">
+            <button onclick="toggleLike(${p.id})" class="flex items-center gap-1 text-[11px] ${liked ? 'text-red-500 font-medium' : 'text-stone-400 hover:text-red-500'} transition-colors">
+                <iconify-icon icon="${liked ? 'lucide:heart' : 'lucide:heart'}" class="text-xs"></iconify-icon>
+                ${liked ? 'Liked' : 'Like'}
+            </button>
+            <button onclick="openCommentModal(${p.id})" class="flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-700 transition-colors">
+                <iconify-icon icon="lucide:message-square" class="text-xs"></iconify-icon>
+                Comment
+            </button>
+            <button onclick="toggleSave(${p.id})" class="flex items-center gap-1 text-[11px] ${saved ? 'text-orange-500 font-medium' : 'text-stone-400 hover:text-orange-500'} transition-colors ml-auto">
+                <iconify-icon icon="${saved ? 'lucide:bookmark-check' : 'lucide:bookmark'}" class="text-xs"></iconify-icon>
+                ${saved ? 'Saved' : 'Save'}
+            </button>
+        </div>` : ''}
+    </div>`;
+}
+
+/* ===== BROWSE ===== */
+function renderBrowseFilters() {
+    const div = document.getElementById('browse-cat-filters');
+    if (!div) return;
+
+    div.innerHTML = `
+        <button onclick="toggleCategory(null)" class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${!activeCategory ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300'}">All</button>
+        ${mlCategories.map(c =>
+            `<button onclick="toggleCategory('${c.slug}')" class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${activeCategory === c.slug ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300'}">${c.name}</button>`
+        ).join('')}
+    `;
+}
+
+function toggleCategory(slug) {
+    activeCategory = activeCategory === slug ? null : slug;
+    visibleCount = 9;
+    filterPrompts();
+    renderBrowseFilters();
+}
+
+function filterPrompts() {
+    const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+    const sortVal = document.getElementById('sort-select')?.value || 'popular';
+
+    let filtered = prompts.filter(p => {
+        const matchText = p.title.toLowerCase().includes(search) || p.desc.toLowerCase().includes(search);
+        const matchCat  = !activeCategory || p.category === activeCategory;
+        return matchText && matchCat;
+    });
+
+    // Sort
+    if (sortVal === 'popular') filtered.sort((a,b) => b.likes - a.likes);
+    else if (sortVal === 'newest') filtered.sort((a,b) => b.id - a.id);
+    else if (sortVal === 'most-copied') filtered.sort((a,b) => b.copies - a.copies);
+    else if (sortVal === 'most-commented') filtered.sort((a,b) => b.comments.length - a.comments.length);
+
+    const grid = document.getElementById('prompt-grid');
+    const emptyState = document.getElementById('empty-state');
+    const loadMoreBtn = document.getElementById('load-more-container');
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+    } else {
+        if (emptyState) emptyState.classList.add('hidden');
+        grid.innerHTML = filtered.slice(0, visibleCount).map(renderPromptCard).join('');
+        if (loadMoreBtn) loadMoreBtn.classList.toggle('hidden', filtered.length <= visibleCount);
+    }
+}
+
+function loadMore() {
+    visibleCount += 6;
+    filterPrompts();
+}
+
+/* ===== TRENDING ===== */
+function renderTrending() {
+    const list = document.getElementById('trending-list');
+    const sorted = [...prompts].sort((a,b) => b.likes - a.likes).slice(0, 10);
+    list.innerHTML = sorted.map((p, i) => `
+        <div class="flex items-start gap-4 p-4 bg-white border border-stone-200 rounded-xl hover:shadow-sm transition-all cursor-pointer" onclick="openDetail(${p.id})">
+            <div class="text-2xl font-bold ${i < 3 ? 'text-orange-500' : 'text-stone-300'}">${i + 1}</div>
+            <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-semibold tracking-tight truncate">${escapeHtml(p.title)}</h3>
+                <p class="text-xs text-stone-500 line-clamp-1 mt-0.5">${escapeHtml(p.desc)}</p>
+                <div class="flex items-center gap-3 mt-2 text-[11px] text-stone-400">
+                    <span class="flex items-center gap-1"><iconify-icon icon="lucide:heart"></iconify-icon> ${p.likes}</span>
+                    <span class="flex items-center gap-1"><iconify-icon icon="lucide:copy"></iconify-icon> ${p.copies}</span>
+                    <span class="inline-flex items-center gap-1 ${getCategory(p.category).color} px-1.5 py-0.5 rounded text-[9px] font-medium border">${getCategory(p.category).name}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+/* ===== SAVED ===== */
+function renderSaved() {
+    const grid  = document.getElementById('saved-grid');
+    const empty = document.getElementById('saved-empty');
+
+    const saved = prompts.filter(p => savedPrompts.has(p.id));
+
+    if (saved.length === 0) {
+        grid.innerHTML = '';
+        if (empty) empty.classList.remove('hidden');
+    } else {
+        if (empty) empty.classList.add('hidden');
+        grid.innerHTML = saved.map(renderPromptCard).join('');
+    }
+}
+
+function renderMyPrompts() {
+    const grid  = document.getElementById('my-prompts-grid');
+    const empty = document.getElementById('my-prompts-empty');
+
+    const mine = prompts.filter(p => p.author_id === currentUser?.id || p.userId === currentUser?.email);
+
+    if (mine.length === 0) {
+        grid.innerHTML = '';
+        if (empty) empty.classList.remove('hidden');
+    } else {
+        if (empty) empty.classList.add('hidden');
+        grid.innerHTML = mine.map(renderPromptCard).join('');
+    }
+}
+
+/* ===== INTERACTIONS ===== */
+async function toggleLike(id) {
+    if (!currentUser) {
+        openModal('login-modal');
+        return;
+    }
+
+    const response = await fetch(`/api/prompts/${id}/like`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+        const p = prompts.find(x => x.id === id);
+        if (p) {
+            p.likes = data.likes;
+        }
+
+        if (data.liked) {
+            likedPrompts.add(id);
+        } else {
+            likedPrompts.delete(id);
+        }
+
+        refresh();
+    }
+}
+
+async function toggleSave(id) {
+    if (!currentUser) {
+        openModal('login-modal');
+        return;
+    }
+
+    const response = await fetch(`/api/prompts/${id}/save`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+        if (data.saved) {
+            savedPrompts.add(id);
+        } else {
+            savedPrompts.delete(id);
+        }
+
+        updateAuthUI();
+        refresh();
+    }
+}
+
+function openCommentModal(id) {
+    if (!currentUser) {
+        openModal('login-modal');
+        return;
+    }
+    commentTargetId = id;
+    renderComments();
+    openModal('comment-modal');
+}
+
+function renderComments() {
+    const list = document.getElementById('comments-list');
+    if (!list || !commentTargetId) return;
+
+    const p = prompts.find(x => x.id === commentTargetId);
+    if (!p) return;
+
+    if (p.comments.length === 0) {
+        list.innerHTML = '<p class="text-sm text-stone-400 text-center py-8">No comments yet. Be the first!</p>';
+        return;
+    }
+
+    list.innerHTML = p.comments.map(c => `
+        <div class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                <span class="text-[10px] font-semibold text-stone-500">${c.author.charAt(0).toUpperCase()}</span>
+            </div>
+            <div>
+                <div class="text-xs font-medium">${escapeHtml(c.author)} <span class="text-stone-400 font-normal">${c.time}</span></div>
+                <p class="text-sm text-stone-600 mt-0.5">${escapeHtml(c.text)}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function handleAddComment(e) {
+    e.preventDefault();
+
+    if (!commentTargetId || !currentUser) {
+        return;
+    }
+
+    const input = document.getElementById('comment-input');
+    const text  = input.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+    const response = await fetch(`/api/prompts/${commentTargetId}/comments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id,
+            text: text
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+        const p = prompts.find(x => x.id === commentTargetId);
+
+        if (p) {
+            p.comments.push(data.comment);
+        }
+
+        input.value = '';
+        renderComments();
+        refresh();
+    }
+}
+
+/* ===== DETAIL ===== */
+function openDetail(id) {
+    const p = prompts.find(x => x.id === id);
+    if (!p) return;
+
+    const locked = p.isPremium && (!currentUser || !currentUser.isPro);
+    const cat    = getCategory(p.category);
+
+    document.getElementById('detail-content').innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <span class="inline-flex items-center gap-1.5 ${cat.color} px-2.5 py-1 rounded-md text-xs font-medium border">
+                <iconify-icon icon="${cat.icon}" class="text-xs"></iconify-icon>
+                ${cat.name}
+            </span>
+            <button onclick="closeModal('detail-modal')" class="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition-colors">
+                <iconify-icon icon="lucide:x" class="text-stone-400"></iconify-icon>
+            </button>
+        </div>
+
+        <h2 class="text-xl font-semibold tracking-tight mb-2">${escapeHtml(p.title)}</h2>
+        <p class="text-xs text-stone-400 mb-4">By ${escapeHtml(p.author)} &middot; ${p.time}</p>
+
+        ${p.isPremium ? `<div class="flex items-center gap-2 mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <iconify-icon icon="lucide:zap" class="text-amber-500"></iconify-icon>
+            <span class="text-xs font-medium text-amber-700">Premium Prompt ${locked ? '— Upgrade to Pro to view full content' : ''}</span>
+        </div>` : ''}
+
+        <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 mb-4">
+            <label class="text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2 block">Prompt</label>
+            <p class="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap ${locked ? 'premium-blur' : ''}">${escapeHtml(p.prompt)}</p>
+        </div>
+
+        ${p.context ? `
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+            <label class="text-[10px] font-semibold uppercase tracking-wider text-blue-400 mb-2 block">Context</label>
+            <p class="text-sm text-blue-700 leading-relaxed ${locked ? 'premium-blur' : ''}">${escapeHtml(p.context)}</p>
+        </div>` : ''}
+
+        <div class="flex items-center gap-4 text-sm text-stone-500 mb-4">
+            <span class="flex items-center gap-1"><iconify-icon icon="lucide:heart"></iconify-icon> ${p.likes} likes</span>
+            <span class="flex items-center gap-1"><iconify-icon icon="lucide:copy"></iconify-icon> ${p.copies} copies</span>
+            <span class="flex items-center gap-1"><iconify-icon icon="lucide:message-square"></iconify-icon> ${p.comments.length} comments</span>
+        </div>
+
+        <div class="flex items-center gap-2 pt-4 border-t border-stone-100">
+            ${currentUser ? `
+                <button onclick="toggleLike(${p.id}); openDetail(${p.id});" class="flex items-center gap-1.5 text-sm ${likedPrompts.has(p.id) ? 'text-red-500' : 'text-stone-500 hover:text-red-500'} transition-colors">
+                    <iconify-icon icon="lucide:heart"></iconify-icon>
+                    ${likedPrompts.has(p.id) ? 'Liked' : 'Like'}
+                </button>
+                <button onclick="toggleSave(${p.id}); openDetail(${p.id});" class="flex items-center gap-1.5 text-sm ${savedPrompts.has(p.id) ? 'text-orange-500' : 'text-stone-500 hover:text-orange-500'} transition-colors">
+                    <iconify-icon icon="${savedPrompts.has(p.id) ? 'lucide:bookmark-check' : 'lucide:bookmark'}"></iconify-icon>
+                    ${savedPrompts.has(p.id) ? 'Saved' : 'Save'}
+                </button>
+                <button onclick="closeModal('detail-modal'); openCommentModal(${p.id});" class="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors">
+                    <iconify-icon icon="lucide:message-square"></iconify-icon>
+                    Comment
+                </button>
+                <button onclick="copyPrompt(${p.id})" class="ml-auto flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 transition-colors">
+                    <iconify-icon icon="lucide:copy"></iconify-icon>
+                    Copy
+                </button>
+            ` : `<p class="text-xs text-stone-400">Sign in to like, save, or comment on this prompt.</p>`}
+        </div>
+    `;
+
+    openModal('detail-modal');
+}
+
+async function copyPrompt(id) {
+    const p = prompts.find(x => x.id === id);
+
+    if (!p) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(p.prompt);
+    } catch (e) {
+        console.log("Clipboard copy failed");
+    }
+
+    const response = await fetch(`/api/prompts/${id}/copy`, {
+        method: 'POST'
+    });
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+        p.copies = data.copies;
+    } else {
+        p.copies++;
+    }
+
+    showToast('Prompt copied to clipboard!', 'success');
+    refresh();
+}
+
+/* ===== PROMPT SUBMIT ===== */
+async function handleSubmitPrompt(e) {
+    e.preventDefault();
+
+    if (!currentUser) {
+        openModal('login-modal');
+        return;
+    }
+
+    const title   = document.getElementById('prompt-title').value.trim();
+    const text    = document.getElementById('prompt-text').value.trim();
+    const context = document.getElementById('prompt-context')?.value?.trim() || '';
+    const desc    = document.getElementById('prompt-desc')?.value?.trim() || '';
+    const isPremium = document.getElementById('prompt-premium')?.checked || false;
+
+    const response = await fetch('/api/add_prompt', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            title: title,
+            text: text,
+            context: context,
+            description: desc,
+            user_id: currentUser.id,
+            is_premium: isPremium
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.status !== "success") {
+        showToast(data.message || 'Prompt submit failed.', 'error');
+        return;
+    }
+
+    prompts.unshift(data.prompt);
+
+    document.getElementById('prompt-title').value = '';
+    document.getElementById('prompt-text').value = '';
+
+    if (document.getElementById('prompt-context')) {
+        document.getElementById('prompt-context').value = '';
+    }
+
+    if (document.getElementById('prompt-desc')) {
+        document.getElementById('prompt-desc').value = '';
+    }
+
+    if (document.getElementById('prompt-premium')) {
+        document.getElementById('prompt-premium').checked = false;
+    }
+
+    const classifyPreview = document.getElementById('classify-preview');
+    if (classifyPreview) {
+        classifyPreview.classList.add('hidden');
+    }
+
+    closeModal('submit-modal');
+    showToast('Prompt submitted successfully!', 'success');
+
+    refreshCurrentPage();
+}
+
+/* ===== MODAL UTILS ===== */
+function openModal(id) {
+    document.getElementById(id)?.classList.remove('hidden');
+}
+
+function closeModal(id) {
+    document.getElementById(id)?.classList.add('hidden');
+}
+
+/* ===== REFRESH ===== */
+function refresh() {
+    if (currentPage === 'browse') filterPrompts();
+    if (currentPage === 'categories') renderCategories();
+    if (currentPage === 'trending') renderTrending();
+    if (currentPage === 'saved') renderSaved();
+    if (currentPage === 'my-prompts') renderMyPrompts();
+    updateStats();
+}
+
+/* ===== INITIALIZATION ===== */
+document.addEventListener('DOMContentLoaded', async () => {
+    restoreSession();
+
+    updateAuthUI();
+
+    await loadPromptsFromDB();
+
+    renderCategories();
+
+    refresh();
+});
+</script>
+</body>
+</html>

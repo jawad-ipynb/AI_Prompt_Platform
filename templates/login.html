@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — AI Prompt Platform</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::selection {
+            background: #fed7aa;
+            color: #7c2d12;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fafaf9 0%, #f5f5f4 100%);
+            min-height: 100vh;
+        }
+
+        .noise::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            opacity: 0.4;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        .toast-in {
+            animation: toastIn 0.3s ease-out forwards;
+        }
+
+        .toast-out {
+            animation: toastOut 0.3s ease-in forwards;
+        }
+    </style>
+</head>
+
+<body class="font-sans text-stone-900 antialiased flex items-center justify-center p-4 relative overflow-hidden noise">
+
+    <!-- Background Decorations -->
+    <div class="absolute top-0 -right-32 w-[40%] h-[40%] rounded-full bg-orange-200/20 blur-3xl"></div>
+    <div class="absolute bottom-20 -left-32 w-[40%] h-[40%] rounded-full bg-stone-200/40 blur-3xl"></div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-2"></div>
+
+    <!-- Login Card -->
+    <div class="relative z-10 w-full max-w-md animate-fade-in-up">
+        <div class="bg-white/80 backdrop-blur-md border border-stone-200/60 rounded-2xl shadow-xl p-8">
+
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <a href="/" class="inline-flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center shadow-md">
+                        <iconify-icon icon="lucide:sparkles" class="text-white text-sm"></iconify-icon>
+                    </div>
+                    <span class="font-semibold text-base tracking-tight">AI Prompt Platform</span>
+                </a>
+
+                <h2 class="text-2xl font-semibold tracking-tight text-stone-900">Welcome Back</h2>
+                <p class="text-xs text-stone-400 mt-1">Sign in to continue</p>
+            </div>
+
+            <!-- Error -->
+            <div id="login-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 flex items-center gap-2">
+                <iconify-icon icon="lucide:alert-circle" class="text-sm shrink-0"></iconify-icon>
+                <span id="login-error-text">Invalid credentials.</span>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+
+                <div>
+                    <label class="block text-xs font-medium text-stone-600 mb-1.5">Email Address *</label>
+                    <input
+                        type="email"
+                        id="login-email"
+                        required
+                        placeholder="you@example.com"
+                        class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-stone-600 mb-1.5">Password *</label>
+                    <input
+                        type="password"
+                        id="login-password"
+                        required
+                        placeholder="Enter your password"
+                        class="w-full text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-stone-200 focus:border-stone-400 placeholder-stone-400 transition-all"
+                    >
+                </div>
+
+                <div class="flex items-center justify-between -mt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="remember-me" class="w-3.5 h-3.5 rounded border-stone-300 accent-stone-900">
+                        <span class="text-xs text-stone-500">Remember me</span>
+                    </label>
+
+                    <a href="/forgot-password" class="text-xs text-stone-500 hover:text-orange-600 transition-colors">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <button
+                    type="submit"
+                    id="login-btn"
+                    class="w-full bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium py-2.5 rounded-lg transition-all shadow-md shadow-stone-900/10 flex items-center justify-center gap-2 mt-2"
+                >
+                    <iconify-icon icon="lucide:log-in" class="text-sm"></iconify-icon>
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Signup Link -->
+            <p class="text-xs text-stone-400 text-center mt-6">
+                Don't have an account?
+                <a href="/signup" class="text-stone-900 font-medium hover:text-orange-600 transition-colors">
+                    Sign up
+                </a>
+            </p>
+        </div>
+
+        <p class="text-center text-[10px] text-stone-300 mt-6">DS-Lab Project — SZABIST Islamabad</p>
+    </div>
+
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            const errDiv = document.getElementById('login-error');
+            const errText = document.getElementById('login-error-text');
+            const loginBtn = document.getElementById('login-btn');
+
+            errDiv.classList.add('hidden');
+
+            try {
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = `
+                    <iconify-icon icon="lucide:loader-2" class="text-sm animate-spin"></iconify-icon>
+                    Signing In...
+                `;
+
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    localStorage.setItem("loggedInUser", data.user.name);
+                    localStorage.setItem("user_id", data.user.id);
+                    localStorage.setItem("user_email", data.user.email);
+                    localStorage.setItem("user_isPro", String(data.user.isPro));
+
+                    showToast("Login successful! Redirecting...", "lucide:check-circle");
+
+                    setTimeout(() => {
+                        window.location.href = "/";
+                    }, 800);
+
+                } else {
+                    errText.textContent = data.message || "Invalid email or password.";
+                    errDiv.classList.remove('hidden');
+
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = `
+                        <iconify-icon icon="lucide:log-in" class="text-sm"></iconify-icon>
+                        Sign In
+                    `;
+                }
+
+            } catch (error) {
+                errText.textContent = "Server error. Make sure Flask is running.";
+                errDiv.classList.remove('hidden');
+
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = `
+                    <iconify-icon icon="lucide:log-in" class="text-sm"></iconify-icon>
+                    Sign In
+                `;
+            }
+        }
+
+        function showToast(message, icon = 'lucide:info') {
+            const container = document.getElementById('toast-container');
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-in flex items-center gap-2.5 bg-white border border-stone-200 shadow-lg rounded-xl px-4 py-3 min-w-[240px] max-w-sm';
+
+            toast.innerHTML = `
+                <iconify-icon icon="${icon}" class="text-orange-500 text-base shrink-0"></iconify-icon>
+                <span class="text-sm text-stone-700">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.className = toast.className.replace('toast-in', 'toast-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+
+</body>
+</html>
